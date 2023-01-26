@@ -10,6 +10,7 @@ spec:
   #     network.edgefarm.io/customer: AwesomeCompany
   nodeSelector: 
     company: AwesomeCompany
+    foo: bar
   # affinity:
   #   nodeAffinity:
   #     requiredDuringSchedulingIgnoredDuringExecution:

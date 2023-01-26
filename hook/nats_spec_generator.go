@@ -40,29 +40,10 @@ func (c *NatsSpecGenerator) GenerateManifestResponse(request *SyncRequest) (*Syn
 						"network.edgefarm.io/name": request.Parent.Name, // TODO: add domain here?
 					},
 				},
-				
+
 				Spec: v1.PodSpec{
 					InitContainers: []v1.Container{c.getNatsInitContainer()},
-
-					Containers: []v1.Container{
-						{
-							Name:  "leaf-nats",
-							Image: "nats:2.9.11-alpine",
-							Ports: []v1.ContainerPort{{ContainerPort: 4111}}, // TODO: Which Ports?
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      "config",
-									MountPath: "/etc/nats",
-									ReadOnly:  true,
-								},
-								// {
-								// 	Name:      "creds",
-								// 	MountPath: "/creds",
-								// 	ReadOnly:  true,
-								// },
-							},
-						},
-					},
+					Containers:     []v1.Container{c.getNatsContainer()},
 					Volumes: []v1.Volume{
 						{
 							Name: "config-origin",
@@ -89,6 +70,17 @@ func (c *NatsSpecGenerator) GenerateManifestResponse(request *SyncRequest) (*Syn
 						// 	},
 						// },
 					},
+					Affinity: &v1.Affinity{
+						NodeAffinity: &v1.NodeAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: &v1.NodeSelector{
+								NodeSelectorTerms: []v1.NodeSelectorTerm{
+									{
+										MatchExpressions: c.getNodeSelectorRequirementsFromRequest(request),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -97,6 +89,19 @@ func (c *NatsSpecGenerator) GenerateManifestResponse(request *SyncRequest) (*Syn
 	response.Children = append(response.Children, daemonSet)
 
 	return response, nil
+}
+
+func (*NatsSpecGenerator) getNodeSelectorRequirementsFromRequest(request *SyncRequest) []v1.NodeSelectorRequirement {
+	var result []v1.NodeSelectorRequirement
+
+	for key, value := range request.Parent.Spec.NodeSelecter {
+		result = append(result, v1.NodeSelectorRequirement{
+			Key:      key,
+			Operator: v1.NodeSelectorOpIn,
+			Values:   []string{value},
+		})
+	}
+	return result
 }
 
 func (*NatsSpecGenerator) getNatsInitContainer() v1.Container {
@@ -134,9 +139,29 @@ func (*NatsSpecGenerator) getNatsInitContainer() v1.Container {
 	}
 }
 
+func (*NatsSpecGenerator) getNatsContainer() v1.Container {
+	return v1.Container{
+		Name:  "leaf-nats",
+		Image: "nats:2.9.11-alpine",
+		Ports: []v1.ContainerPort{{ContainerPort: 4222}}, // TODO: Which Ports?
+		VolumeMounts: []v1.VolumeMount{
+			{
+				Name:      "config",
+				MountPath: "/etc/nats",
+				ReadOnly:  true,
+			},
+			// {
+			// 	Name:      "creds",
+			// 	MountPath: "/creds",
+			// 	ReadOnly:  true,
+			// },
+		},
+	}
+}
+
 func (*NatsSpecGenerator) getConfigMapForNats(request *SyncRequest) *v1.ConfigMap {
 	leafNatsConfig := &nats.ServerConfig{
-		Listen: "localhost:4111",
+		Listen: "localhost:4222",
 		LeafNodes: nats.LeafNodesConfig{
 			Remotes: []nats.LeafNodeRemoteConfig{
 				{

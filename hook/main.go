@@ -2,7 +2,7 @@ package main
 
 import (
 	"io/ioutil"
-	"leaf-nats-controller/api"
+	api "leaf-nats-controller/api/edgenetwork/v1alpha1"
 	"log"
 	"net/http"
 
@@ -12,12 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
-
-
-
-
 type SyncRequest struct {
-	Parent   api.EdgeNetwork          `json:"parent"`
+	Parent   api.EdgeNetwork     `json:"parent"`
 	Children SyncRequestChildren `json:"children"`
 }
 
@@ -27,7 +23,7 @@ type SyncRequestChildren struct {
 
 type SyncResponse struct {
 	Status   api.EdgeNetworkStatus `json:"status"`
-	Children []runtime.Object `json:"children"`
+	Children []runtime.Object      `json:"children"`
 }
 
 func syncHandler(w http.ResponseWriter, r *http.Request) {
