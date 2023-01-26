@@ -1,0 +1,26 @@
+apiVersion: network.edgefarm.io/v1alpha1
+kind: EdgeNetwork
+metadata:
+  name: edge-network
+  labels:
+    foo: bar
+spec:
+  # labelSelector:
+  #   matchLabels:
+  #     network.edgefarm.io/customer: AwesomeCompany
+  nodeSelector: 
+    company: AwesomeCompany
+  # affinity:
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #         - matchExpressions:
+  #             - key: node-role.kubernetes.io/edge
+  #               operator: Exists
+  #             - key: node-role.kubernetes.io/agent
+  #               operator: Exists
+  network: test-network-def
+  limits:
+    fileStorage: 10G
+    inMemoryStorage: 1G
+status: {}
