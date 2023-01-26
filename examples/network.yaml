@@ -12,4 +12,3 @@ spec:
   limits:
     fileStorage: 10G
     inMemoryStorage: 1G
-status: {}
