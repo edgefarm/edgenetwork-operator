@@ -1,0 +1,93 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: edgenetworks.network.edgefarm.io
+spec:
+  group: network.edgefarm.io
+  names:
+    kind: EdgeNetwork
+    listKind: EdgeNetworkList
+    plural: edgenetworks
+    shortNames:
+    - en
+    singular: edgenetwork
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.network
+      name: NETWORK
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    - jsonPath: .spec.limits.fileStorage
+      name: FILE LIMIT
+      priority: 1
+      type: string
+    - jsonPath: .spec.limits.inMemoryStorage
+      name: MEMORY LIMIT
+      priority: 1
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              limits:
+                properties:
+                  fileStorage:
+                    default: 1G
+                    pattern: ^\d+[GMKB]?$
+                    type: string
+                  inMemoryStorage:
+                    default: 1G
+                    pattern: ^\d+[GMKB]?$
+                    type: string
+                required:
+                - fileStorage
+                - inMemoryStorage
+                type: object
+              network:
+                minLength: 3
+                type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+            required:
+            - limits
+            - network
+            - nodeSelector
+            type: object
+          status:
+            properties:
+              replicas:
+                type: integer
+              succeeded:
+                type: integer
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
