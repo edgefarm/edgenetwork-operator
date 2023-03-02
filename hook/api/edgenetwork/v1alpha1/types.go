@@ -5,6 +5,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:resource:categories=foo
 // +kubebuilder:resource:shortName=en
 //
 // +kubebuilder:printcolumn:name="NETWORK",type="string",JSONPath=".spec.network"
