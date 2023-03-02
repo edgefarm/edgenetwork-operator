@@ -1,0 +1,51 @@
+apiVersion: metacontroller.k8s.io/v1alpha1
+kind: CompositeController
+metadata:
+  name: leaf-nats-controller
+spec:
+  generateSelector: true
+  parentResource:
+    apiVersion: network.edgefarm.io/v1alpha1
+    resource: edgenetworks
+  childResources:
+    - apiVersion: v1
+      resource: configmaps
+    - apiVersion: apps/v1
+      resource: daemonsets
+
+  hooks:
+    sync:
+      webhook:
+        url: http://leaf-nats-controller.metacontroller/sync
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaf-nats-controller
+  namespace: metacontroller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leaf-nats-controller
+  template:
+    metadata:
+      labels:
+        app: leaf-nats-controller
+    spec:
+      containers:
+      - name: controller
+        image: mmrxx/yakha:dev
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leaf-nats-controller
+  namespace: metacontroller
+spec:
+  selector:
+    app: leaf-nats-controller
+  ports:
+  - port: 80
+    targetPort: 8080
