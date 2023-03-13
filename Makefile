@@ -1,23 +1,37 @@
 PWD := ${CURDIR}
-NAME=yakha
-TAG?= dev
-REGISTRY=localhost:5000
+NAME=edgenetwork-operator/controller
+REGISTRY=ghcr.io/edgefarm
+TAG?= latest
+
+generate:
+	go generate ./...
 
 setup:
 	kubectl apply -k https://github.com/metacontroller/metacontroller/manifests/production 
-install:
-	cd hook/; go generate ./...; cd ..; 
-	kubectl apply -f ./crds
-	kubectl apply -f ./controller.yaml
+	
+crd: generate
+	kubectl apply -f ./manifests/crds/
+
+controller:
+	kubectl apply -f ./manifests/controller.yaml
+
+install: crd controller
+
 example:
 	kubectl apply -f ./examples/network.yaml
 
+build:
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH="$(GOARCH)" go build -o main  -gcflags "all=-N -l" -ldflags '-extldflags "-static"' cmd/controller/main.go
+
 image:
-	docker build -t $(NAME):$(TAG) -f ./hook/Dockerfile ./hook
+	docker build -t $(REGISTRY)/$(NAME):$(TAG) -f ./Dockerfile .
+
 push: image
-	docker tag $(NAME):$(TAG) mmrxx/$(NAME):$(TAG)
-	docker push mmrxx/$(NAME):$(TAG)
+	docker push $(REGISTRY)/$(NAME):$(TAG)
+
 clean:
 	kubectl delete -f ./examples/network.yaml
-	kubectl delete -f ./controller.yaml
+	kubectl delete -f ./manifests/controller.yaml
 	kubectl -n metacontroller delete pod/metacontroller-0
+
+.PHONY: generate setup install example image push clean
