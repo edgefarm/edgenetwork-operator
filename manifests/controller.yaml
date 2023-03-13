@@ -40,6 +40,14 @@ spec:
         - name: controller
           image: ghcr.io/edgefarm/edgenetwork-operator/controller:latest
           imagePullPolicy: IfNotPresent
+          args: ["--log-level", "info"]
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
