@@ -40,6 +40,7 @@ spec:
         - name: controller
           image: ghcr.io/edgefarm/edgenetwork-operator/controller:latest
           imagePullPolicy: IfNotPresent
+          command: ["/controller"]
           args: ["--log-level", "info"]
           resources:
             limits:
