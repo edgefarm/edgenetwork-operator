@@ -30,6 +30,21 @@
         ]
       }
     ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "sed -i \"s/ghcr.io/edgefarm/edgenetwork-operator/controller:.*/ghcr.io/edgefarm/edgenetwork-operator/controller:${nextRelease.version}/g\" manifests/controller.yaml"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "manifests/controller.yaml"
+        ],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
     "@semantic-release/release-notes-generator",
     "@semantic-release/github"
   ]
