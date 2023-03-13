@@ -1,7 +1,7 @@
 apiVersion: metacontroller.k8s.io/v1alpha1
 kind: CompositeController
 metadata:
-  name: leaf-nats-controller
+  name: edgenetwork-operator
 spec:
   generateSelector: true
   parentResource:
@@ -10,42 +10,45 @@ spec:
   childResources:
     - apiVersion: v1
       resource: configmaps
+      updateStrategy:
+        method: Recreate
     - apiVersion: apps/v1
       resource: daemonsets
-
+      updateStrategy:
+        method: Recreate
   hooks:
     sync:
       webhook:
-        url: http://leaf-nats-controller.metacontroller/sync
+        url: http://edgenetwork-operator.metacontroller/sync
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: leaf-nats-controller
+  name: edgenetwork-operator
   namespace: metacontroller
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: leaf-nats-controller
+      app: edgenetwork-operator
   template:
     metadata:
       labels:
-        app: leaf-nats-controller
+        app: edgenetwork-operator
     spec:
       containers:
-      - name: controller
-        image: mmrxx/yakha:dev
-        imagePullPolicy: Always
+        - name: controller
+          image: ghcr.io/edgefarm/edgenetwork-operator/controller:latest
+          imagePullPolicy: IfNotPresent
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: leaf-nats-controller
+  name: edgenetwork-operator
   namespace: metacontroller
 spec:
   selector:
-    app: leaf-nats-controller
+    app: edgenetwork-operator
   ports:
-  - port: 80
-    targetPort: 8080
+    - port: 80
+      targetPort: 8080

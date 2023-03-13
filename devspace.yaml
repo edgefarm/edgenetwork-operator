@@ -1,0 +1,46 @@
+version: v2beta1
+name: edgenetwork-operator
+
+vars:
+  IMAGE: ghcr.io/edgefarm/edgenetwork-operator/controller:latest
+
+functions:
+  wait_for: |-
+    #!/bin/bash
+    set -e
+    echo "wait for $1 $2 (ns: $3) for condition=$4"
+    until kubectl wait --for=condition=$4 $1 $2 -n $3 --timeout=60s 2>/dev/null; do echo -n "." && sleep 2; done
+
+deployments:
+  metacontroller:
+    kubectl:
+      kustomize: true
+      manifests:
+        - https://github.com/metacontroller/metacontroller/manifests/production
+
+  controller:
+    kubectl:
+      manifests:
+        - manifests/**/
+
+pipelines:
+  deploy: |-
+    #!/bin/bash
+    set -e
+    create_deployments metacontroller
+    wait_for pod "-l app.kubernetes.io/name=metacontroller" metacontroller Ready
+    create_deployments controller
+
+dev:
+  controller:
+    imageSelector: ${IMAGE}
+    devImage: ghcr.io/loft-sh/devspace-containers/go:1.20-alpine
+    namespace: metacontroller
+    terminal: {}
+    ports:
+      - port: "2345"
+      - port: "8080"
+    sync:
+      - path: ./:/app
+        excludePaths:
+          - .git

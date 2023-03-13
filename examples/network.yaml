@@ -5,10 +5,12 @@ metadata:
   labels:
     foo: bar
 spec:
-  nodeSelector: 
-    company: AwesomeCompany
+  nodeSelector:
     foo: bar
-  network: test-network-def
+  network: mynetwork
+  connectionSecretRef:
+    name: mynetwork
+  address: nats.nats
   limits:
     fileStorage: 10G
     inMemoryStorage: 1G
