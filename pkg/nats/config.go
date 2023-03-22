@@ -1,22 +1,22 @@
 package nats
 
 type ServerConfig struct {
-	Listen        string          `json:"listen,omitempty"`
-	LeafNodes     LeafNodesConfig `json:"leafnodes,omitempty"`
-	Jetstream     JetstreamConfig `json:"jetstream"`
-	PidFile       string          `json:"pid_file,omitempty"`
-	Http          int             `json:"http,omitempty"`
-	Operator      string          `json:"operator,omitempty"`
-	SystemAccount string          `json:"system_account,omitempty"`
-	// Resolver        ResolverConfig    `json:"resolver,omitempty"`
+	Listen          string            `json:"listen,omitempty"`
+	LeafNodes       LeafNodesConfig   `json:"leafnodes,omitempty"`
+	Jetstream       JetstreamConfig   `json:"jetstream"`
+	PidFile         string            `json:"pid_file,omitempty"`
+	Http            int               `json:"http,omitempty"`
+	Operator        string            `json:"operator,omitempty"`
+	SystemAccount   string            `json:"system_account,omitempty"`
+	Resolver        *ResolverConfig   `json:"resolver,omitempty"`
 	ResolverPreload map[string]string `json:"resolver_preload,omitempty"`
 }
 
 type ResolverConfig struct {
 	Type    string `json:"type,omitempty"`
 	Dir     string `json:"dir,omitempty"`
-	TTL     int    `json:"ttl,omitempty"`
-	Timeout int    `json:"timeout,omitempty"`
+	TTL     string `json:"ttl,omitempty"`
+	Timeout string `json:"timeout,omitempty"`
 }
 
 type LeafNodesConfig struct {

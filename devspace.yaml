@@ -44,3 +44,8 @@ dev:
       - path: ./:/app
         excludePaths:
           - .git
+    atches:
+      - op: remove
+        path: spec.securityContext
+      - op: remove
+        path: spec.template.spec.containers[0].resources

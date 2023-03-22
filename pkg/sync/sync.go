@@ -13,6 +13,7 @@ import (
 
 	api "github.com/edgefarm/edgenetwork-operator/apis/edgenetwork/v1alpha1"
 	"github.com/edgefarm/edgenetwork-operator/pkg/generate"
+	customjson "github.com/edgefarm/edgenetwork-operator/pkg/json"
 )
 
 type SyncRequest struct {
@@ -57,7 +58,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		Children: manifests,
 	}
 
-	body, err = json.Marshal(&response)
+	// cannot use json.Marshal() here because it escapes '>' and '<' to unicode
+	// which is not supported by nats
+	// responseBody := bytes.NewBuffer([]byte{})
+	// jsonEncoder := json.NewEncoder(responseBody)
+	// jsonEncoder.SetEscapeHTML(false)
+	// err = jsonEncoder.Encode(response)
+	// if err != nil {
+	// 	log.Error().Msgf("Error marshalling response: %v", err)
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	// s := responseBody.String()
+	body, err = customjson.Marshal(response, false)
 	if err != nil {
 		log.Error().Msgf("Error marshalling response: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

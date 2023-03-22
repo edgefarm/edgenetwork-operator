@@ -29,6 +29,10 @@ type EdgeNetworkSpec struct {
 	// +kubebuilder:validation:Required
 	Network string `json:"network"`
 
+	// The name of the sub network
+	// +kubebuilder:validation:Required
+	SubNetwork string `json:"subNetwork"`
+
 	//The address of the server.
 	// Example: "example.com"
 	// +kubebuilder:validation:Required
