@@ -165,6 +165,9 @@ spec:
                     type: array
                 type: object
                 x-kubernetes-map-type: atomic
+              subNetwork:
+                description: The name of the sub network
+                type: string
               tolerations:
                 description: Indicates the tolerations the pods under this pool have.
                   A pool's tolerations is not allowed to be updated.
@@ -211,6 +214,7 @@ spec:
             - connectionSecretRef
             - limits
             - network
+            - subNetwork
             type: object
           status:
             properties:

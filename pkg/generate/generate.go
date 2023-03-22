@@ -10,9 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/json"
 
 	v1alpha1 "github.com/edgefarm/edgenetwork-operator/apis/edgenetwork/v1alpha1"
+	json "github.com/edgefarm/edgenetwork-operator/pkg/json"
 	"github.com/edgefarm/edgenetwork-operator/pkg/nats"
 )
 
@@ -24,6 +24,7 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 		return nil, err
 	}
 	response = append(response, cm)
+	name := fmt.Sprintf("%s-%s", config.Spec.Network, config.Spec.SubNetwork)
 
 	daemonSet := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
@@ -31,20 +32,22 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 			Kind:       "DaemonSet",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: config.Spec.Network,
+			Name: name,
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": config.Spec.Network,
+					"network.edgefarm.io/type":       "leaf",
+					"network.edgefarm.io/name":       config.Spec.Network,
+					"network.edgefarm.io/subnetwork": config.Spec.SubNetwork,
 				},
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app":                      config.Spec.Network,
-						"network.edgefarm.io/type": "leaf",
-						"network.edgefarm.io/name": config.Spec.Network,
+						"network.edgefarm.io/type":       "leaf",
+						"network.edgefarm.io/name":       config.Spec.Network,
+						"network.edgefarm.io/subnetwork": config.Spec.SubNetwork,
 					},
 				},
 
@@ -73,6 +76,10 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 							VolumeSource: v1.VolumeSource{
 								Secret: &v1.SecretVolumeSource{
 									SecretName: config.Spec.ConnectionSecretRef.Name,
+									Items: []v1.KeyToPath{{
+										Key:  "creds",
+										Path: "creds",
+									}},
 								},
 							},
 						},
@@ -117,7 +124,8 @@ func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 			"-c",
 		},
 		Args: []string{
-			"cp /template/nats-server.conf /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NATS_DOMAIN/'\"$NODE_NAME\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK_NAME/'\"$NETWORK_NAME\"'/g' /etc/nats/nats-server.conf",
+			// TODO: use resolver configuration template
+			"cp /template/nats-server.conf /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NODE_NAME/'\"$NODE_NAME\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK/'\"$NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SUB_NETWORK/'\"$SUB_NETWORK\"'/g' /etc/nats/nats-server.conf",
 		},
 		Env: []v1.EnvVar{
 			{
@@ -129,8 +137,12 @@ func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 				},
 			},
 			{
-				Name:  "NETWORK_NAME",
+				Name:  "NETWORK",
 				Value: config.Spec.Network,
+			},
+			{
+				Name:  "SUB_NETWORK",
+				Value: config.Spec.SubNetwork,
 			},
 		},
 		VolumeMounts: []v1.VolumeMount{
@@ -177,6 +189,37 @@ func getNatsContainer() v1.Container {
 }
 
 func getConfigMapForNats(config *v1alpha1.EdgeNetwork) (*v1.ConfigMap, error) {
+	// {
+	// 	"jetstream": {
+	// 	  "store_dir": "/store",
+	// 	  "domain": "DEFAULT_DOMAIN"
+	// 	},
+	// 	"pid_file": "/var/run/nats/nats.pid",
+	// 	"http": 8222,
+	// 	"leafnodes": {
+	// 	  "remotes": [
+	// 		{
+	// 		  "url": "nats://TEMPALTE_NATS_ADDRESS:7422",
+	// 		  "credentials": "/creds/system.creds",
+	// 		  "account": "TEMPLATE_ACCOUNT_PUBLIC_KEY",
+	// 		  "deny_imports": ["local.>"],
+	// 		  "deny_exports": ["local.>"]
+	// 		}
+	// 	  ]
+	// 	},
+	// 	"operator": "TEMPLATE_OPERATOR_JWT",
+	// 	"system_account": "TEMPLATE_SYSTEM_ACCOUNT_PUBLIC_KEY",
+	// 	"resolver": {
+	// 	  "type": "cache",
+	// 	  "dir": "/jwt",
+	// 	  "ttl": "1h",
+	// 	  "timeout": "1.9s"
+	// 	},
+	// 	"resolver_preload": {
+	// 	  "TEMPLATE_SYSTEM_ACCOUNT_PUBLIC_KEY": "TEMPALTE_SYSTEM_ACCOUNT_JWT",
+	// 	}
+	// }
+
 	leafNatsConfig := &nats.ServerConfig{
 		Listen: "localhost:4222",
 		LeafNodes: nats.LeafNodesConfig{
@@ -184,6 +227,9 @@ func getConfigMapForNats(config *v1alpha1.EdgeNetwork) (*v1.ConfigMap, error) {
 				{
 					Url:         fmt.Sprintf("nats://%s:7422", config.Spec.Address),
 					Credentials: "/creds/creds",
+					// Account:     "TEMPLATE_ACCOUNT_PUBLIC_KEY",
+					DenyImports: []string{"local.>"},
+					DenyExports: []string{"local.>"},
 				},
 			},
 		},
@@ -191,10 +237,21 @@ func getConfigMapForNats(config *v1alpha1.EdgeNetwork) (*v1.ConfigMap, error) {
 			MaxMemory: config.Spec.Limits.InMemoryStorage,
 			MaxFile:   config.Spec.Limits.FileStorage,
 			StoreDir:  "/data",
-			Domain:    "TEMPLATE_NETWORK_NAME-TEMPLATE_NATS_DOMAIN",
+			Domain:    "TEMPLATE_NETWORK-TEMPLATE_SUB_NETWORK-TEMPLATE_NODE_NAME",
 		},
+		// Operator:      "TEMPLATE_OPERATOR_JWT",
+		// SystemAccount: "TEMPLATE_SYSTEM_ACCOUNT_PUBLIC_KEY",
+		// Resolver: nats.ResolverConfig{
+		// 	Type:    "cache",
+		// 	Dir:     "/jwt",
+		// 	TTL:     "1h",
+		// 	Timeout: "1.9s",
+		// },
+		// ResolverPreload: map[string]string{
+		// 	"TEMPLATE_SYSTEM_ACCOUNT_PUBLIC_KEY": "TEMPALTE_SYSTEM_ACCOUNT_JWT",
+		// },
 	}
-	leafNatsConfigString, err := json.Marshal(leafNatsConfig)
+	leafNatsConfigString, err := json.Marshal(leafNatsConfig, false)
 	if err != nil {
 		return nil, err
 	}
