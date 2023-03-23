@@ -65,16 +65,33 @@ spec:
               address:
                 description: 'The address of the server. Example: "example.com"'
                 type: string
-              connectionSecretRef:
-                description: Reference to the secret containing the credentials to
-                  connect to the network
+              connectionSecretRefs:
+                description: The connection secrets to connect to the network
                 properties:
-                  name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                      TODO: Add other useful fields. apiVersion, kind, uid?'
-                    type: string
+                  sysAccountUserSecretRef:
+                    description: Reference to the secret containing the credentials
+                      to connect to the network as a system account user
+                    properties:
+                      name:
+                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Add other useful fields. apiVersion, kind, uid?'
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  systemUserSecretRef:
+                    description: Reference to the secret containing the credentials
+                      to connect to the network as a system user
+                    properties:
+                      name:
+                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Add other useful fields. apiVersion, kind, uid?'
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                required:
+                - sysAccountUserSecretRef
+                - systemUserSecretRef
                 type: object
-                x-kubernetes-map-type: atomic
               limits:
                 description: Hardware limits for the edge network
                 properties:
@@ -211,7 +228,7 @@ spec:
                 type: array
             required:
             - address
-            - connectionSecretRef
+            - connectionSecretRefs
             - limits
             - network
             - subNetwork

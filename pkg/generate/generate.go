@@ -72,13 +72,61 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 							},
 						},
 						{
-							Name: "creds",
+							Name: "system-user-creds",
 							VolumeSource: v1.VolumeSource{
 								Secret: &v1.SecretVolumeSource{
-									SecretName: config.Spec.ConnectionSecretRef.Name,
+									SecretName: config.Spec.ConnectionSecretRefs.SystemUserSecretRef.Name,
 									Items: []v1.KeyToPath{{
 										Key:  "creds",
 										Path: "creds",
+									}},
+								},
+							},
+						},
+						{
+							Name: "system-account-user-creds",
+							VolumeSource: v1.VolumeSource{
+								Secret: &v1.SecretVolumeSource{
+									SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+									Items: []v1.KeyToPath{{
+										Key:  "creds",
+										Path: "creds",
+									}},
+								},
+							},
+						},
+						{
+							Name: "system-account-jwt",
+							VolumeSource: v1.VolumeSource{
+								Secret: &v1.SecretVolumeSource{
+									SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+									Items: []v1.KeyToPath{{
+										Key:  "system-account-jwt",
+										Path: "system-account-jwt",
+									}},
+								},
+							},
+						},
+						{
+							Name: "system-account-public-key",
+							VolumeSource: v1.VolumeSource{
+								Secret: &v1.SecretVolumeSource{
+									SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+									Items: []v1.KeyToPath{{
+										Key:  "system-account-public-key",
+										Path: "system-account-public-key",
+									}},
+								},
+							},
+						},
+						{
+							Name: "operator-jwt",
+							VolumeSource: v1.VolumeSource{
+								Secret: &v1.SecretVolumeSource{
+									SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+									Items: []v1.KeyToPath{{
+										Key:  "operator-jwt",
+										Path: "operator-jwt",
 									}},
 								},
 							},
@@ -92,6 +140,12 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 										return &q
 									}(),
 								},
+							},
+						},
+						{
+							Name: "jwt",
+							VolumeSource: v1.VolumeSource{
+								EmptyDir: &v1.EmptyDirVolumeSource{},
 							},
 						},
 					},
@@ -124,8 +178,7 @@ func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 			"-c",
 		},
 		Args: []string{
-			// TODO: use resolver configuration template
-			"cp /template/nats-server.conf /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NODE_NAME/'\"$NODE_NAME\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK/'\"$NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SUB_NETWORK/'\"$SUB_NETWORK\"'/g' /etc/nats/nats-server.conf",
+			"cp /template/nats-server.conf /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NODE_NAME/'\"$NODE_NAME\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK/'\"$NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SUB_NETWORK/'\"$SUB_NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK/'\"$NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_OPERATOR_JWT/'\"$OPERATOR_JWT\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SYS_ACCOUNT_JWT/'\"$SYS_ACCOUNT_JWT\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SYS_ACCOUNT_PUBLIC_KEY/'\"$SYS_ACCOUNT_PUBLIC_KEY\"'/g' /etc/nats/nats-server.conf&& sed -i 's/TEMPLATE_ACCOUNT_PUBLIC_KEY/'\"$ACCOUNT_PUBLIC_KEY\"'/g' /etc/nats/nats-server.conf",
 		},
 		Env: []v1.EnvVar{
 			{
@@ -143,6 +196,50 @@ func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 			{
 				Name:  "SUB_NETWORK",
 				Value: config.Spec.SubNetwork,
+			},
+			{
+				Name: "OPERATOR_JWT",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+						},
+						Key: "operator-jwt",
+					},
+				},
+			},
+			{
+				Name: "SYS_ACCOUNT_JWT",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+						},
+						Key: "sys-account-jwt",
+					},
+				},
+			},
+			{
+				Name: "SYS_ACCOUNT_PUBLIC_KEY",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+						},
+						Key: "sys-account-public-key",
+					},
+				},
+			},
+			{
+				Name: "ACCOUNT_PUBLIC_KEY",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: config.Spec.ConnectionSecretRefs.SystemUserSecretRef.Name,
+						},
+						Key: "account-public-key",
+					},
+				},
 			},
 		},
 		VolumeMounts: []v1.VolumeMount{
@@ -163,7 +260,7 @@ func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 func getNatsContainer() v1.Container {
 	return v1.Container{
 		Name:  "nats",
-		Image: "nats:2.9.11-alpine",
+		Image: "nats:2.9.14-alpine",
 		Ports: []v1.ContainerPort{{ContainerPort: 4222}},
 		// Command: []string{"/bin/sh", "-c", "--"},
 		// Args:    []string{"while true; do sleep 30; done;"},
@@ -175,8 +272,13 @@ func getNatsContainer() v1.Container {
 				ReadOnly:  true,
 			},
 			{
-				Name:      "creds",
-				MountPath: "/creds",
+				Name:      "system-user-creds",
+				MountPath: "/system-user",
+				ReadOnly:  true,
+			},
+			{
+				Name:      "system-account-user-creds",
+				MountPath: "/system-account-user",
 				ReadOnly:  true,
 			},
 			{
@@ -189,47 +291,21 @@ func getNatsContainer() v1.Container {
 }
 
 func getConfigMapForNats(config *v1alpha1.EdgeNetwork) (*v1.ConfigMap, error) {
-	// {
-	// 	"jetstream": {
-	// 	  "store_dir": "/store",
-	// 	  "domain": "DEFAULT_DOMAIN"
-	// 	},
-	// 	"pid_file": "/var/run/nats/nats.pid",
-	// 	"http": 8222,
-	// 	"leafnodes": {
-	// 	  "remotes": [
-	// 		{
-	// 		  "url": "nats://TEMPALTE_NATS_ADDRESS:7422",
-	// 		  "credentials": "/creds/system.creds",
-	// 		  "account": "TEMPLATE_ACCOUNT_PUBLIC_KEY",
-	// 		  "deny_imports": ["local.>"],
-	// 		  "deny_exports": ["local.>"]
-	// 		}
-	// 	  ]
-	// 	},
-	// 	"operator": "TEMPLATE_OPERATOR_JWT",
-	// 	"system_account": "TEMPLATE_SYSTEM_ACCOUNT_PUBLIC_KEY",
-	// 	"resolver": {
-	// 	  "type": "cache",
-	// 	  "dir": "/jwt",
-	// 	  "ttl": "1h",
-	// 	  "timeout": "1.9s"
-	// 	},
-	// 	"resolver_preload": {
-	// 	  "TEMPLATE_SYSTEM_ACCOUNT_PUBLIC_KEY": "TEMPALTE_SYSTEM_ACCOUNT_JWT",
-	// 	}
-	// }
-
 	leafNatsConfig := &nats.ServerConfig{
 		Listen: "localhost:4222",
 		LeafNodes: nats.LeafNodesConfig{
 			Remotes: []nats.LeafNodeRemoteConfig{
 				{
 					Url:         fmt.Sprintf("nats://%s:7422", config.Spec.Address),
-					Credentials: "/creds/creds",
-					// Account:     "TEMPLATE_ACCOUNT_PUBLIC_KEY",
+					Credentials: "/system-user/creds",
+					Account:     "TEMPLATE_ACCOUNT_PUBLIC_KEY",
 					DenyImports: []string{"local.>"},
 					DenyExports: []string{"local.>"},
+				},
+				{
+					Url:         fmt.Sprintf("nats://%s:7422", config.Spec.Address),
+					Credentials: "/system-account-user/creds",
+					Account:     "TEMPLATE_SYS_ACCOUNT_PUBLIC_KEY",
 				},
 			},
 		},
@@ -239,17 +315,17 @@ func getConfigMapForNats(config *v1alpha1.EdgeNetwork) (*v1.ConfigMap, error) {
 			StoreDir:  "/data",
 			Domain:    "TEMPLATE_NETWORK-TEMPLATE_SUB_NETWORK-TEMPLATE_NODE_NAME",
 		},
-		// Operator:      "TEMPLATE_OPERATOR_JWT",
-		// SystemAccount: "TEMPLATE_SYSTEM_ACCOUNT_PUBLIC_KEY",
-		// Resolver: nats.ResolverConfig{
-		// 	Type:    "cache",
-		// 	Dir:     "/jwt",
-		// 	TTL:     "1h",
-		// 	Timeout: "1.9s",
-		// },
-		// ResolverPreload: map[string]string{
-		// 	"TEMPLATE_SYSTEM_ACCOUNT_PUBLIC_KEY": "TEMPALTE_SYSTEM_ACCOUNT_JWT",
-		// },
+		Operator:      "TEMPLATE_OPERATOR_JWT",
+		SystemAccount: "TEMPLATE_SYS_ACCOUNT_PUBLIC_KEY",
+		Resolver: &nats.ResolverConfig{
+			Type:    "cache",
+			Dir:     "/jwt",
+			TTL:     "1h",
+			Timeout: "2s",
+		},
+		ResolverPreload: map[string]string{
+			"TEMPLATE_SYS_ACCOUNT_PUBLIC_KEY": "TEMPLATE_SYS_ACCOUNT_JWT",
+		},
 	}
 	leafNatsConfigString, err := json.Marshal(leafNatsConfig, false)
 	if err != nil {

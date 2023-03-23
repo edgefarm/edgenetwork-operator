@@ -23,6 +23,16 @@ type EdgeNetwork struct {
 	Status            EdgeNetworkStatus `json:"status,omitempty"`
 }
 
+type ConnectionSecretsSpec struct {
+	// Reference to the secret containing the credentials to connect to the network as a system account user
+	// +kubebuilder:validation:Required
+	SysAccountUserSecretRef *corev1.LocalObjectReference `json:"sysAccountUserSecretRef"`
+
+	// Reference to the secret containing the credentials to connect to the network as a system user
+	// +kubebuilder:validation:Required
+	SystemUserSecretRef *corev1.LocalObjectReference `json:"systemUserSecretRef"`
+}
+
 // The spec to define an edge network
 type EdgeNetworkSpec struct {
 	// The name of the network
@@ -52,9 +62,9 @@ type EdgeNetworkSpec struct {
 	// +kubebuilder:validation:Required
 	Limits Limits `json:"limits"`
 
-	// Reference to the secret containing the credentials to connect to the network
+	// The connection secrets to connect to the network
 	// +kubebuilder:validation:Required
-	ConnectionSecretRef *corev1.LocalObjectReference `json:"connectionSecretRef"`
+	ConnectionSecretRefs ConnectionSecretsSpec `json:"connectionSecretRefs"`
 }
 
 // Defines memory/storage limits to use
