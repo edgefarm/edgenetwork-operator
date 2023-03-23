@@ -16,6 +16,10 @@ spec:
       resource: daemonsets
       updateStrategy:
         method: Recreate
+    - apiVersion: v1
+      resource: services
+      updateStrategy:
+        method: Recreate
   hooks:
     sync:
       webhook:

@@ -33,7 +33,7 @@ pipelines:
 
 dev:
   controller:
-    imageSelector: ${IMAGE}
+    imageSelector: ghcr.io/edgefarm/edgenetwork-operator/controller:latest
     devImage: ghcr.io/loft-sh/devspace-containers/go:1.20-alpine
     namespace: metacontroller
     terminal: {}
@@ -44,8 +44,8 @@ dev:
       - path: ./:/app
         excludePaths:
           - .git
-    atches:
+    patches:
       - op: remove
         path: spec.securityContext
       - op: remove
-        path: spec.template.spec.containers[0].resources
+        path: spec.containers[0].resources

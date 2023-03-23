@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1alpha1 "github.com/edgefarm/edgenetwork-operator/apis/edgenetwork/v1alpha1"
 	json "github.com/edgefarm/edgenetwork-operator/pkg/json"
@@ -25,6 +26,9 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 	}
 	response = append(response, cm)
 	name := fmt.Sprintf("%s-%s", config.Spec.Network, config.Spec.SubNetwork)
+
+	service := getService(config)
+	response = append(response, service)
 
 	daemonSet := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
@@ -193,6 +197,46 @@ func getNodeSelectorTerms(config *v1alpha1.EdgeNetwork) []v1.NodeSelectorTerm {
 		}
 	}
 	return ret
+}
+
+func getService(config *v1alpha1.EdgeNetwork) *v1.Service {
+	name := fmt.Sprintf("%s-%s", config.Spec.Network, config.Spec.SubNetwork)
+	return &v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+			Labels: map[string]string{
+				"network.edgefarm.io/type":                                               "leaf",
+				fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
+				fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
+			},
+		},
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Name:       "nats",
+					Port:       4222,
+					TargetPort: intstr.FromInt(4222),
+					Protocol:   v1.ProtocolTCP,
+				},
+				{
+					Name:       "nats-metrics",
+					Port:       8222,
+					TargetPort: intstr.FromInt(8222),
+					Protocol:   v1.ProtocolTCP,
+				},
+			},
+			Selector: map[string]string{
+				"network.edgefarm.io/type":                                               "leaf",
+				fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
+				fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
+			},
+			Type: v1.ServiceTypeClusterIP,
+		},
+	}
 }
 
 func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
