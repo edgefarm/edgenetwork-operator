@@ -9,10 +9,17 @@ on:
     types:
       - completed
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   on-success:
     name: Release
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -37,14 +44,18 @@ jobs:
         run: |
           make build
 
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_USER: siredmar
         run: |-
           #!/bin/bash
           set -e
-          npm install @semantic-release/exec @eclass/semantic-release-docker -D
+          npm install @semantic-release/exec -D
           # the ... || true is to prevent the script from failing caused by a bug in semantic-release regarding 
           # rate limit changes on github. See https://github.com/semantic-release/github/pull/487
           npx -c semantic-release || true
