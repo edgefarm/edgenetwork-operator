@@ -50,8 +50,8 @@ type EdgeNetworkSpec struct {
 
 	// Indicates the node selector to form the node pool.
 	// A pool's nodeSelectorTerm is not allowed to be updated.
-	// +kubebuilder:validation:Required
-	NodeSelectorTerm corev1.NodeSelectorTerm `json:"nodeSelectorTerm,omitempty"`
+	// +kubebuilder:validation:Optional
+	NodeSelectorTerm *corev1.NodeSelectorTerm `json:"nodeSelectorTerm,omitempty"`
 
 	// Indicates the tolerations the pods under this pool have.
 	// A pool's tolerations is not allowed to be updated.

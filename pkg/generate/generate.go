@@ -152,9 +152,7 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 					Affinity: &v1.Affinity{
 						NodeAffinity: &v1.NodeAffinity{
 							RequiredDuringSchedulingIgnoredDuringExecution: &v1.NodeSelector{
-								NodeSelectorTerms: []v1.NodeSelectorTerm{
-									config.Spec.NodeSelectorTerm,
-								},
+								NodeSelectorTerms: getNodeSelectorTerms(config),
 							},
 						},
 					},
@@ -167,6 +165,34 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 	response = append(response, daemonSet)
 
 	return response, nil
+}
+
+func getNodeSelectorTerms(config *v1alpha1.EdgeNetwork) []v1.NodeSelectorTerm {
+	ret := []v1.NodeSelectorTerm{
+		{
+			MatchExpressions: []v1.NodeSelectorRequirement{
+				{
+					Key:      "subnetwork.network.edgefarm.io/" + config.Spec.SubNetwork,
+					Operator: v1.NodeSelectorOpExists,
+				},
+				{
+					Key:      "name.network.edgefarm.io/" + config.Spec.Network,
+					Operator: v1.NodeSelectorOpExists,
+				},
+				{
+					Key:      "network.edgefarm.io/type",
+					Operator: v1.NodeSelectorOpIn,
+					Values:   []string{"leaf"},
+				},
+			},
+		},
+	}
+	if config.Spec.NodeSelectorTerm != nil {
+		if config.Spec.NodeSelectorTerm.MatchExpressions != nil {
+			ret[0].MatchExpressions = append(ret[0].MatchExpressions, config.Spec.NodeSelectorTerm.MatchExpressions...)
+		}
+	}
+	return ret
 }
 
 func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
