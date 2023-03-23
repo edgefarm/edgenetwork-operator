@@ -1,16 +1,17 @@
 apiVersion: network.edgefarm.io/v1alpha1
 kind: EdgeNetwork
 metadata:
-  name: edge-network
-  labels:
-    foo: bar
+  name: mynetwork
+  namespace: myconfig
 spec:
-  nodeSelector:
-    foo: bar
+  address: nats.nats.svc
   network: mynetwork
-  connectionSecretRef:
-    name: mynetwork
-  address: nats.nats
+  subNetwork: mysubnet
   limits:
-    fileStorage: 10G
-    inMemoryStorage: 1G
+    fileStorage: 100M
+    inMemoryStorage: 100M
+  connectionSecretRefs:
+    sysAccountUserSecretRef:
+      name: mynetwork-sys
+    systemUserSecretRef:
+      name: mynetwork-system
