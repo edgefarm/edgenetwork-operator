@@ -4,7 +4,6 @@ metadata:
   name: mynetwork
   namespace: myconfig
 spec:
-  address: nats.nats.svc
   network: mynetwork
   subNetwork: mysubnet
   limits:

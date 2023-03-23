@@ -62,9 +62,6 @@ spec:
           spec:
             description: The spec to define an edge network
             properties:
-              address:
-                description: 'The address of the server. Example: "example.com"'
-                type: string
               connectionSecretRefs:
                 description: The connection secrets to connect to the network
                 properties:
@@ -227,7 +224,6 @@ spec:
                   type: object
                 type: array
             required:
-            - address
             - connectionSecretRefs
             - limits
             - network

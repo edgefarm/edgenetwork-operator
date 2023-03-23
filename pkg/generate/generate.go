@@ -248,8 +248,11 @@ func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 			"-c",
 		},
 		Args: []string{
-			"cp /template/nats-server.conf /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NODE_NAME/'\"$NODE_NAME\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK/'\"$NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SUB_NETWORK/'\"$SUB_NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK/'\"$NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_OPERATOR_JWT/'\"$OPERATOR_JWT\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SYS_ACCOUNT_JWT/'\"$SYS_ACCOUNT_JWT\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SYS_ACCOUNT_PUBLIC_KEY/'\"$SYS_ACCOUNT_PUBLIC_KEY\"'/g' /etc/nats/nats-server.conf&& sed -i 's/TEMPLATE_ACCOUNT_PUBLIC_KEY/'\"$ACCOUNT_PUBLIC_KEY\"'/g' /etc/nats/nats-server.conf",
+			"cp /template/nats-server.conf /etc/nats/nats-server.conf && export ADDRESS_NO_PORT=$(echo $ADDRESS | awk -F \":\" '{print $1\":\"$2}') && sed -i 's/TEMPLATE_NODE_NAME/'\"$NODE_NAME\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK/'\"$NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SUB_NETWORK/'\"$SUB_NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_NETWORK/'\"$NETWORK\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_OPERATOR_JWT/'\"$OPERATOR_JWT\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SYS_ACCOUNT_JWT/'\"$SYS_ACCOUNT_JWT\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_SYS_ACCOUNT_PUBLIC_KEY/'\"$SYS_ACCOUNT_PUBLIC_KEY\"'/g' /etc/nats/nats-server.conf && sed -i 's/TEMPLATE_ACCOUNT_PUBLIC_KEY/'\"$ACCOUNT_PUBLIC_KEY\"'/g' /etc/nats/nats-server.conf && sed -i 's#TEMPLATE_ADDRESS#'$ADDRESS_NO_PORT'#g' /etc/nats/nats-server.conf",
 		},
+		// Args: []string{
+		// 	"sleep 1000000000",
+		// },
 		Env: []v1.EnvVar{
 			{
 				Name: "NODE_NAME",
@@ -311,6 +314,17 @@ func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 					},
 				},
 			},
+			{
+				Name: "ADDRESS",
+				ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{
+							Name: config.Spec.ConnectionSecretRefs.SystemUserSecretRef.Name,
+						},
+						Key: "address",
+					},
+				},
+			},
 		},
 		VolumeMounts: []v1.VolumeMount{
 			{
@@ -366,14 +380,14 @@ func getConfigMapForNats(config *v1alpha1.EdgeNetwork) (*v1.ConfigMap, error) {
 		LeafNodes: nats.LeafNodesConfig{
 			Remotes: []nats.LeafNodeRemoteConfig{
 				{
-					Url:         fmt.Sprintf("nats://%s:7422", config.Spec.Address),
+					Url:         "TEMPLATE_ADDRESS:7422",
 					Credentials: "/system-user/creds",
 					Account:     "TEMPLATE_ACCOUNT_PUBLIC_KEY",
 					DenyImports: []string{"local.>"},
 					DenyExports: []string{"local.>"},
 				},
 				{
-					Url:         fmt.Sprintf("nats://%s:7422", config.Spec.Address),
+					Url:         "TEMPLATE_ADDRESS:7422",
 					Credentials: "/system-account-user/creds",
 					Account:     "TEMPLATE_SYS_ACCOUNT_PUBLIC_KEY",
 				},
