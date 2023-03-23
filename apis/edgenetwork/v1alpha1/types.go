@@ -43,11 +43,6 @@ type EdgeNetworkSpec struct {
 	// +kubebuilder:validation:Required
 	SubNetwork string `json:"subNetwork"`
 
-	//The address of the server.
-	// Example: "example.com"
-	// +kubebuilder:validation:Required
-	Address string `json:"address"`
-
 	// Indicates the node selector to form the node pool.
 	// A pool's nodeSelectorTerm is not allowed to be updated.
 	// +kubebuilder:validation:Optional
