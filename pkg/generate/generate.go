@@ -37,17 +37,17 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"network.edgefarm.io/type":       "leaf",
-					"network.edgefarm.io/name":       config.Spec.Network,
-					"network.edgefarm.io/subnetwork": config.Spec.SubNetwork,
+					"network.edgefarm.io/type":                                               "leaf",
+					fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
+					fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
 				},
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"network.edgefarm.io/type":       "leaf",
-						"network.edgefarm.io/name":       config.Spec.Network,
-						"network.edgefarm.io/subnetwork": config.Spec.SubNetwork,
+						"network.edgefarm.io/type":                                               "leaf",
+						fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
+						fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
 					},
 				},
 
