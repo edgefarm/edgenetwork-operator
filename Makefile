@@ -17,6 +17,9 @@ controller:
 
 install: crd controller
 
+test:
+	go test -v ./...
+
 example:
 	kubectl apply -f ./examples/network.yaml
 

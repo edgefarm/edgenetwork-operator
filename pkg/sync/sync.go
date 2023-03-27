@@ -37,7 +37,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Debug().Msgf("Received sync request [raw]: ", string(body))
+	log.Debug().Msgf("Received sync request [raw]: %s", string(body))
 
 	request := &SyncRequest{}
 	if err := json.Unmarshal(body, request); err != nil {
