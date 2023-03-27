@@ -13,13 +13,13 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "docker buildx create --use && docker buildx build --push --tag ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator --tag ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator:${nextRelease.version} --platform linux/amd64,linux/arm/v7,linux/arm64 -f Dockerfile ."
+        "prepareCmd": "docker buildx create --use && docker buildx build --push --tag ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator --tag ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator:${nextRelease.version} --platform linux/amd64,linux/arm64 -f Dockerfile ."
       }
     ],
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "sed -i \"s/ghcr.io/edgefarm/edgenetwork-operator/controller:.*/ghcr.io/edgefarm/edgenetwork-operator/controller:${nextRelease.version}/g\" manifests/controller.yaml"
+        "prepareCmd": "sed -i \"s#ghcr.io/edgefarm/edgenetwork-operator/controller:.*#ghcr.io/edgefarm/edgenetwork-operator/controller:${nextRelease.version}#g\" manifests/controller.yaml"
       }
     ],
     [
