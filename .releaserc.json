@@ -19,7 +19,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "sed -i \"s#ghcr.io/edgefarm/edgenetwork-operator/controller:.*#ghcr.io/edgefarm/edgenetwork-operator/controller:${nextRelease.version}#g\" manifests/controller.yaml"
+        "prepareCmd": "sed -i \"s#ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator:.*#ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator:${nextRelease.version}#g\" manifests/controller.yaml"
       }
     ],
     [
