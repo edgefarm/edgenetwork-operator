@@ -174,21 +174,7 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 func getNodeSelectorTerms(config *v1alpha1.EdgeNetwork) []v1.NodeSelectorTerm {
 	ret := []v1.NodeSelectorTerm{
 		{
-			MatchExpressions: []v1.NodeSelectorRequirement{
-				{
-					Key:      "subnetwork.network.edgefarm.io/" + config.Spec.SubNetwork,
-					Operator: v1.NodeSelectorOpExists,
-				},
-				{
-					Key:      "name.network.edgefarm.io/" + config.Spec.Network,
-					Operator: v1.NodeSelectorOpExists,
-				},
-				{
-					Key:      "network.edgefarm.io/type",
-					Operator: v1.NodeSelectorOpIn,
-					Values:   []string{"leaf"},
-				},
-			},
+			MatchExpressions: []v1.NodeSelectorRequirement{},
 		},
 	}
 	if config.Spec.NodeSelectorTerm != nil {

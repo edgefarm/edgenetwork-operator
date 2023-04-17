@@ -48,6 +48,11 @@ type EdgeNetworkSpec struct {
 	// +kubebuilder:validation:Optional
 	NodeSelectorTerm *corev1.NodeSelectorTerm `json:"nodeSelectorTerm,omitempty"`
 
+	// TODO: delete NodeSelectorTerm and use NodePoolSelector instead if change to openYurt.
+	// // NodePoolSelector is a label query over nodepool that should match the replica count.
+	// // It must match the nodepool's labels.
+	// NodePoolSelector *metav1.LabelSelector `json:"nodepoolSelector"`
+
 	// Indicates the tolerations the pods under this pool have.
 	// A pool's tolerations is not allowed to be updated.
 	// +kubebuilder:validation:Optional
