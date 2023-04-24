@@ -3,6 +3,7 @@ package generate
 import (
 	"fmt"
 
+	yurtv1alpha1 "github.com/edgefarm/edgenetwork-operator/pkg/api/yurtappdaemon"
 	appsv1 "k8s.io/api/apps/v1"
 
 	v1 "k8s.io/api/core/v1"
@@ -30,15 +31,15 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 	service := getService(config)
 	response = append(response, service)
 
-	daemonSet := &appsv1.DaemonSet{
+	yurtAppDaemon := &yurtv1alpha1.YurtAppDaemon{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "apps/v1",
-			Kind:       "DaemonSet",
+			APIVersion: "apps.openyurt.io/v1alpha1",
+			Kind:       "YurtAppDaemon",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: appsv1.DaemonSetSpec{
+		Spec: yurtv1alpha1.YurtAppDaemonSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"network.edgefarm.io/type":                                               "leaf",
@@ -46,143 +47,142 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 					fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
 				},
 			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"network.edgefarm.io/type":                                               "leaf",
-						fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
-						fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
+			WorkloadTemplate: yurtv1alpha1.WorkloadTemplate{
+				DeploymentTemplate: &yurtv1alpha1.DeploymentTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"network.edgefarm.io/type":                                               "leaf",
+							fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
+							fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
+						},
 					},
-				},
-
-				Spec: v1.PodSpec{
-					InitContainers: []v1.Container{getNatsInitContainer(config)},
-					Containers:     []v1.Container{getNatsContainer()},
-					Volumes: []v1.Volume{
-						{
-							Name: "config-template",
-							VolumeSource: v1.VolumeSource{
-								ConfigMap: &v1.ConfigMapVolumeSource{
-									LocalObjectReference: v1.LocalObjectReference{
-										Name: fmt.Sprintf("%s-leaf-nats-config", config.Spec.Network),
+					Spec: appsv1.DeploymentSpec{
+						Selector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								"network.edgefarm.io/type":                                               "leaf",
+								fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
+								fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
+							},
+						},
+						Template: v1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"network.edgefarm.io/type":                                               "leaf",
+									fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
+									fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
+								},
+							},
+							Spec: v1.PodSpec{
+								InitContainers: []v1.Container{getNatsInitContainer(config)},
+								Containers:     []v1.Container{getNatsContainer()},
+								Volumes: []v1.Volume{
+									{
+										Name: "config-template",
+										VolumeSource: v1.VolumeSource{
+											ConfigMap: &v1.ConfigMapVolumeSource{
+												LocalObjectReference: v1.LocalObjectReference{
+													Name: fmt.Sprintf("%s-leaf-nats-config", config.Spec.Network),
+												},
+											},
+										},
+									},
+									{
+										Name: "config",
+										VolumeSource: v1.VolumeSource{
+											EmptyDir: &v1.EmptyDirVolumeSource{},
+										},
+									},
+									{
+										Name: "system-user-creds",
+										VolumeSource: v1.VolumeSource{
+											Secret: &v1.SecretVolumeSource{
+												SecretName: config.Spec.ConnectionSecretRefs.SystemUserSecretRef.Name,
+												Items: []v1.KeyToPath{{
+													Key:  "creds",
+													Path: "creds",
+												}},
+											},
+										},
+									},
+									{
+										Name: "system-account-user-creds",
+										VolumeSource: v1.VolumeSource{
+											Secret: &v1.SecretVolumeSource{
+												SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+												Items: []v1.KeyToPath{{
+													Key:  "creds",
+													Path: "creds",
+												}},
+											},
+										},
+									},
+									{
+										Name: "system-account-jwt",
+										VolumeSource: v1.VolumeSource{
+											Secret: &v1.SecretVolumeSource{
+												SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+												Items: []v1.KeyToPath{{
+													Key:  "system-account-jwt",
+													Path: "system-account-jwt",
+												}},
+											},
+										},
+									},
+									{
+										Name: "system-account-public-key",
+										VolumeSource: v1.VolumeSource{
+											Secret: &v1.SecretVolumeSource{
+												SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+												Items: []v1.KeyToPath{{
+													Key:  "system-account-public-key",
+													Path: "system-account-public-key",
+												}},
+											},
+										},
+									},
+									{
+										Name: "operator-jwt",
+										VolumeSource: v1.VolumeSource{
+											Secret: &v1.SecretVolumeSource{
+												SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
+												Items: []v1.KeyToPath{{
+													Key:  "operator-jwt",
+													Path: "operator-jwt",
+												}},
+											},
+										},
+									},
+									{
+										Name: "data",
+										VolumeSource: v1.VolumeSource{
+											EmptyDir: &v1.EmptyDirVolumeSource{
+												SizeLimit: func() *resource.Quantity {
+													q := resource.MustParse(config.Spec.Limits.FileStorage)
+													return &q
+												}(),
+											},
+										},
+									},
+									{
+										Name: "jwt",
+										VolumeSource: v1.VolumeSource{
+											EmptyDir: &v1.EmptyDirVolumeSource{},
+										},
 									},
 								},
-							},
-						},
-						{
-							Name: "config",
-							VolumeSource: v1.VolumeSource{
-								EmptyDir: &v1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "system-user-creds",
-							VolumeSource: v1.VolumeSource{
-								Secret: &v1.SecretVolumeSource{
-									SecretName: config.Spec.ConnectionSecretRefs.SystemUserSecretRef.Name,
-									Items: []v1.KeyToPath{{
-										Key:  "creds",
-										Path: "creds",
-									}},
-								},
-							},
-						},
-						{
-							Name: "system-account-user-creds",
-							VolumeSource: v1.VolumeSource{
-								Secret: &v1.SecretVolumeSource{
-									SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
-									Items: []v1.KeyToPath{{
-										Key:  "creds",
-										Path: "creds",
-									}},
-								},
-							},
-						},
-						{
-							Name: "system-account-jwt",
-							VolumeSource: v1.VolumeSource{
-								Secret: &v1.SecretVolumeSource{
-									SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
-									Items: []v1.KeyToPath{{
-										Key:  "system-account-jwt",
-										Path: "system-account-jwt",
-									}},
-								},
-							},
-						},
-						{
-							Name: "system-account-public-key",
-							VolumeSource: v1.VolumeSource{
-								Secret: &v1.SecretVolumeSource{
-									SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
-									Items: []v1.KeyToPath{{
-										Key:  "system-account-public-key",
-										Path: "system-account-public-key",
-									}},
-								},
-							},
-						},
-						{
-							Name: "operator-jwt",
-							VolumeSource: v1.VolumeSource{
-								Secret: &v1.SecretVolumeSource{
-									SecretName: config.Spec.ConnectionSecretRefs.SysAccountUserSecretRef.Name,
-									Items: []v1.KeyToPath{{
-										Key:  "operator-jwt",
-										Path: "operator-jwt",
-									}},
-								},
-							},
-						},
-						{
-							Name: "data",
-							VolumeSource: v1.VolumeSource{
-								EmptyDir: &v1.EmptyDirVolumeSource{
-									SizeLimit: func() *resource.Quantity {
-										q := resource.MustParse(config.Spec.Limits.FileStorage)
-										return &q
-									}(),
-								},
-							},
-						},
-						{
-							Name: "jwt",
-							VolumeSource: v1.VolumeSource{
-								EmptyDir: &v1.EmptyDirVolumeSource{},
+								Tolerations: config.Spec.Tolerations,
 							},
 						},
 					},
-					Affinity: &v1.Affinity{
-						NodeAffinity: &v1.NodeAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: &v1.NodeSelector{
-								NodeSelectorTerms: getNodeSelectorTerms(config),
-							},
-						},
-					},
-					Tolerations: config.Spec.Tolerations,
 				},
 			},
+			NodePoolSelector: config.Spec.NodePoolSelector,
 		},
 	}
 
-	response = append(response, daemonSet)
+	response = append(response, yurtAppDaemon)
 
 	return response, nil
-}
-
-func getNodeSelectorTerms(config *v1alpha1.EdgeNetwork) []v1.NodeSelectorTerm {
-	ret := []v1.NodeSelectorTerm{
-		{
-			MatchExpressions: []v1.NodeSelectorRequirement{},
-		},
-	}
-	if config.Spec.NodeSelectorTerm != nil {
-		if config.Spec.NodeSelectorTerm.MatchExpressions != nil {
-			ret[0].MatchExpressions = append(ret[0].MatchExpressions, config.Spec.NodeSelectorTerm.MatchExpressions...)
-		}
-	}
-	return ret
 }
 
 func getService(config *v1alpha1.EdgeNetwork) *v1.Service {
@@ -198,6 +198,9 @@ func getService(config *v1alpha1.EdgeNetwork) *v1.Service {
 				"network.edgefarm.io/type":                                               "leaf",
 				fmt.Sprintf("name.network.edgefarm.io/%s", config.Spec.Network):          "",
 				fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
+			},
+			Annotations: map[string]string{
+				"openyurt.io/topologyKeys": "openyurt.io/nodepool",
 			},
 		},
 		Spec: v1.ServiceSpec{

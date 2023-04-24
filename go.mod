@@ -4,7 +4,6 @@ go 1.19
 
 require (
 	github.com/rs/zerolog v1.29.0
-	github.com/tidwall/pretty v1.2.1
 	k8s.io/api v0.26.0
 	k8s.io/apimachinery v0.26.0
 	sigs.k8s.io/controller-tools v0.11.1

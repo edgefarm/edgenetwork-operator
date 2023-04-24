@@ -1,9 +1,6 @@
 version: v2beta1
 name: edgenetwork-operator
 
-vars:
-  IMAGE: ghcr.io/edgefarm/edgenetwork-operator/controller:latest
-
 functions:
   wait_for: |-
     #!/bin/bash
@@ -33,7 +30,8 @@ pipelines:
 
 dev:
   controller:
-    imageSelector: ghcr.io/edgefarm/edgenetwork-operator/controller:latest
+    labelSelector:
+      app: edgenetwork-operator
     devImage: ghcr.io/loft-sh/devspace-containers/go:1.20-alpine
     namespace: metacontroller
     terminal: {}
