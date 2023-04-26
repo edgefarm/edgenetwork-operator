@@ -365,7 +365,6 @@ func getNatsContainer() v1.Container {
 
 func getConfigMapForNats(config *v1alpha1.EdgeNetwork) (*v1.ConfigMap, error) {
 	leafNatsConfig := &nats.ServerConfig{
-		Listen: "localhost:4222",
 		LeafNodes: nats.LeafNodesConfig{
 			Remotes: []nats.LeafNodeRemoteConfig{
 				{
