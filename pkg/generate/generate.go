@@ -18,7 +18,6 @@ import (
 	"github.com/edgefarm/edgenetwork-operator/pkg/nats"
 )
 
-// TODO: Generate YurtAppSet -> Deployment
 func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 	response := []runtime.Object{}
 	cm, err := getConfigMapForNats(config)
@@ -170,7 +169,7 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 										},
 									},
 								},
-								Tolerations: config.Spec.Tolerations,
+								Tolerations: getTolerations(config),
 							},
 						},
 					},
@@ -183,6 +182,19 @@ func Manifests(config *v1alpha1.EdgeNetwork) ([]runtime.Object, error) {
 	response = append(response, yurtAppDaemon)
 
 	return response, nil
+}
+
+func getTolerations(config *v1alpha1.EdgeNetwork) []v1.Toleration {
+	ret := []v1.Toleration{
+		{
+			Key:      "edgefarm.io",
+			Operator: "Exists",
+			Effect:   "NoSchedule",
+		},
+	}
+
+	ret = append(ret, config.Spec.Tolerations...)
+	return ret
 }
 
 func getService(config *v1alpha1.EdgeNetwork) *v1.Service {
