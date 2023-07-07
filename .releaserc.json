@@ -23,15 +23,27 @@
       }
     ],
     [
+      "@semantic-release-helm3",
+      {
+        "chartPath": "./charts/edgenetwork-operator",
+        "registry": "ghcr.io/edgefarm/edgenetwork-operator"
+      }
+    ],
+    [
       "@semantic-release/git",
       {
         "assets": [
-          "manifests/controller.yaml"
+          "manifests/controller.yaml",
+          "charts/edgenetwork-operator/Chart.yaml"
         ],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
     "@semantic-release/release-notes-generator",
-    "@semantic-release/github"
+    "@semantic-release/github",
+    {
+      "successComment": false,
+      "failTitle": false
+    }
   ]
 }
