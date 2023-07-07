@@ -25,8 +25,8 @@
     [
       "semantic-release-helm3",
       {
-        "chartPath": "./charts/edgenetwork-operator",
-        "registry": "ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator-helm"
+        "chartPath": "./charts/edgenetwork-operator-helm",
+        "registry": "ghcr.io/edgefarm/edgenetwork-operator"
       }
     ],
     [
@@ -34,7 +34,7 @@
       {
         "assets": [
           "manifests/controller.yaml",
-          "charts/edgenetwork-operator/Chart.yaml"
+          "charts/edgenetwork-operator-helm/Chart.yaml"
         ],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
