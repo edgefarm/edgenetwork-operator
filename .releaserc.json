@@ -26,7 +26,7 @@
       "semantic-release-helm3",
       {
         "chartPath": "./charts/edgenetwork-operator",
-        "registry": "ghcr.io/edgefarm/edgenetwork-operator"
+        "registry": "ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator-helm"
       }
     ],
     [
