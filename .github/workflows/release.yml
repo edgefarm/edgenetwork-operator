@@ -66,6 +66,4 @@ jobs:
           #!/bin/bash
           set -e
           npm install @semantic-release/exec @semantic-release/git semantic-release-helm3 -D
-          # the ... || true is to prevent the script from failing caused by a bug in semantic-release regarding 
-          # rate limit changes on github. See https://github.com/semantic-release/github/pull/487
           npx -c semantic-release
