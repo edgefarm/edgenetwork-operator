@@ -242,8 +242,9 @@ func getService(config *v1alpha1.EdgeNetwork) *v1.Service {
 
 func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 	return v1.Container{
-		Name:  "init",
-		Image: "nats:2.9.11-alpine",
+		Name:            "init",
+		Image:           "nats:2.9.11-alpine",
+		ImagePullPolicy: v1.PullIfNotPresent,
 		Command: []string{
 			"/bin/sh",
 			"-c",
@@ -344,9 +345,10 @@ func getNatsInitContainer(config *v1alpha1.EdgeNetwork) v1.Container {
 
 func getNatsContainer() v1.Container {
 	return v1.Container{
-		Name:  "nats",
-		Image: "nats:2.9.14-alpine",
-		Ports: []v1.ContainerPort{{ContainerPort: 4222}},
+		Name:            "nats",
+		Image:           "nats:2.9.14-alpine",
+		Ports:           []v1.ContainerPort{{ContainerPort: 4222}},
+		ImagePullPolicy: v1.PullIfNotPresent,
 		// Command: []string{"/bin/sh", "-c", "--"},
 		// Args:    []string{"while true; do sleep 30; done;"},
 		Args: []string{"-c", "/etc/nats/nats-server.conf"},
