@@ -42,7 +42,7 @@ spec:
     spec:
       containers:
         - name: controller
-          image: ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator:2.3.3
+          image: ghcr.io/edgefarm/edgenetwork-operator/edgenetwork-operator:2.4.0
           imagePullPolicy: IfNotPresent
           command: ["/controller"]
           args: ["--log-level", "info"]
