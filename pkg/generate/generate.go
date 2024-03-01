@@ -373,6 +373,11 @@ func getNatsContainer() v1.Container {
 				MountPath: "/data",
 				ReadOnly:  false,
 			},
+			{
+				Name:      "jwt",
+				MountPath: "/jwt",
+				ReadOnly:  false,
+			},
 		},
 	}
 }
