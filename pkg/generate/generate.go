@@ -212,7 +212,7 @@ func getService(config *v1alpha1.EdgeNetwork) *v1.Service {
 				fmt.Sprintf("subnetwork.network.edgefarm.io/%s", config.Spec.SubNetwork): "",
 			},
 			Annotations: map[string]string{
-				"openyurt.io/topologyKeys": "openyurt.io/nodepool",
+				"openyurt.io/topologyKeys": "kubernetes.io/hostname",
 			},
 		},
 		Spec: v1.ServiceSpec{
